@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'models/post.dart';
 import 'services/clien_service.dart';
+import 'services/ddanzi_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,10 +35,12 @@ class PostListScreen extends StatefulWidget {
 
 class _PostListScreenState extends State<PostListScreen> {
   final ClienService _clienService = ClienService();
+  final DdanziService _ddanziService = DdanziService();
   final List<Post> _posts = [];
   bool _isLoading = false;
   bool _isRefreshing = false;
   final ScrollController _scrollController = ScrollController();
+  String _selectedBoard = 'clien'; // 'clien' or 'ddanzi'
 
   @override
   void initState() {
@@ -73,7 +77,9 @@ class _PostListScreenState extends State<PostListScreen> {
     });
 
     try {
-      final newPosts = await _clienService.getPosts(refresh: _isRefreshing);
+      final newPosts = await (_selectedBoard == 'clien' 
+          ? _clienService.getPosts(refresh: _isRefreshing)
+          : _ddanziService.getPosts(refresh: _isRefreshing));
       
       if (mounted) {
         setState(() {
@@ -110,8 +116,30 @@ class _PostListScreenState extends State<PostListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clien.net'),
+        title: const Text('게시판'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (String value) {
+              setState(() {
+                _selectedBoard = value;
+                _posts.clear();
+                _isRefreshing = true;
+                _loadPosts();
+              });
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(
+                value: 'clien',
+                child: Text('클리앙'),
+              ),
+              const PopupMenuItem(
+                value: 'ddanzi',
+                child: Text('딴지일보'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
@@ -200,13 +228,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (String url) {
+            print('WebView started loading: $url');
+            setState(() {
+              isLoading = true;
+            });
+          },
           onPageFinished: (String url) {
+            print('WebView finished loading: $url');
+            setState(() {
+              isLoading = false;
+            });
+          },
+          onWebResourceError: (WebResourceError error) {
+            print('WebView error: ${error.description}');
+            print('Error code: ${error.errorCode}');
+            print('Error type: ${error.errorType}');
             setState(() {
               isLoading = false;
             });
           },
         ),
       )
+      ..setBackgroundColor(Colors.white)
+      ..setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1')
       ..loadRequest(Uri.parse(widget.post.url));
   }
 
@@ -216,13 +261,24 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       appBar: AppBar(
         title: Text(widget.post.title),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-            ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Stack(
         children: [
           WebViewWidget(controller: controller),
           if (isLoading)
             const Center(
-              child: CircularProgressIndicator(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('페이지 로딩 중...'),
+                ],
+              ),
             ),
         ],
       ),

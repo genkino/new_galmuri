@@ -16,6 +16,7 @@ class ClienService {
     final client = http.Client();
     try {
       final url = '$baseUrl?od=T31&po=$_currentPage';
+      print('Fetching URL: $url');
       
       final response = await client.get(
         Uri.parse(url),
@@ -37,23 +38,33 @@ class ClienService {
       );
       
       if (response.statusCode == 200) {
+        print('Response status: ${response.statusCode}');
         final document = parser.parse(response.body);
         final posts = <Post>[];
         
         // Find all post items in the page
         final postElements = document.querySelectorAll('div.list_item');
+        print('Found ${postElements.length} post elements');
         
         if (postElements.isEmpty) {
           // Try alternative selectors
           final alternativeElements = document.querySelectorAll('div.list_row');
+          print('Trying alternative selectors, found ${alternativeElements.length} elements');
           
           for (var element in alternativeElements) {
             try {
               final titleElement = element.querySelector('span.subject_fixed, span.subject, a.subject, div.subject');
               final authorElement = element.querySelector('span.nickname, span.nick, div.nickname');
               final viewsElement = element.querySelector('span.hit');
-              final timeElement = element.querySelector('span.timestamp, span.time, div.time');
+              final timeElement = element.querySelector('span.timestamp');
               final linkElement = element.querySelector('a.list_subject, a.subject, div.subject a');
+              
+              print('Parsing post:');
+              print('Title element: ${titleElement?.text}');
+              print('Author element: ${authorElement?.text}');
+              print('Views element: ${viewsElement?.text}');
+              print('Time element: ${timeElement?.text}');
+              print('Link element: ${linkElement?.attributes['href']}');
               
               if (titleElement != null && authorElement != null && 
                   viewsElement != null && timeElement != null && linkElement != null) {
@@ -66,8 +77,40 @@ class ClienService {
                 DateTime timestamp;
                 try {
                   final timeStr = timeElement.attributes['data-timestamp'] ?? timeElement.text.trim();
-                  timestamp = DateTime.parse(timeStr);
+                  print('Parsing timestamp: $timeStr');
+                  
+                  // 여러 줄의 시간 문자열이 있는 경우 마지막 줄 사용
+                  final timeLines = timeStr.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+                  final actualTimeStr = timeLines.last;
+                  print('Using time string: $actualTimeStr');
+                  
+                  if (actualTimeStr.contains(':')) {
+                    // YYYY-MM-DD HH:mm:ss 형식
+                    final parts = actualTimeStr.split(' ');
+                    final dateParts = parts[0].split('-');
+                    final timeParts = parts[1].split(':');
+                    timestamp = DateTime(
+                      int.parse(dateParts[0]), // year
+                      int.parse(dateParts[1]), // month
+                      int.parse(dateParts[2]), // day
+                      int.parse(timeParts[0]), // hour
+                      int.parse(timeParts[1]), // minute
+                      int.parse(timeParts[2]), // second
+                    );
+                  } else {
+                    // 날짜만 있는 경우
+                    final date = DateTime.parse(actualTimeStr);
+                    timestamp = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      23,
+                      59,
+                      0,
+                    );
+                  }
                 } catch (e) {
+                  print('Error parsing timestamp: $e');
                   timestamp = DateTime.now();
                 }
                 
@@ -80,8 +123,12 @@ class ClienService {
                   timestamp: timestamp,
                   url: url,
                 ));
+                print('Successfully added post: $title');
+              } else {
+                print('Missing required elements for post');
               }
             } catch (e) {
+              print('Error processing post: $e');
               continue;
             }
           }
@@ -94,6 +141,13 @@ class ClienService {
               final timeElement = element.querySelector('span.timestamp, span.time, div.time');
               final linkElement = element.querySelector('a.list_subject, a.subject, div.subject a');
               
+              print('Parsing post:');
+              print('Title element: ${titleElement?.text}');
+              print('Author element: ${authorElement?.text}');
+              print('Views element: ${viewsElement?.text}');
+              print('Time element: ${timeElement?.text}');
+              print('Link element: ${linkElement?.attributes['href']}');
+              
               if (titleElement != null && authorElement != null && 
                   viewsElement != null && timeElement != null && linkElement != null) {
                 
@@ -105,8 +159,40 @@ class ClienService {
                 DateTime timestamp;
                 try {
                   final timeStr = timeElement.attributes['data-timestamp'] ?? timeElement.text.trim();
-                  timestamp = DateTime.parse(timeStr);
+                  print('Parsing timestamp: $timeStr');
+                  
+                  // 여러 줄의 시간 문자열이 있는 경우 마지막 줄 사용
+                  final timeLines = timeStr.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
+                  final actualTimeStr = timeLines.last;
+                  print('Using time string: $actualTimeStr');
+                  
+                  if (actualTimeStr.contains(':')) {
+                    // YYYY-MM-DD HH:mm:ss 형식
+                    final parts = actualTimeStr.split(' ');
+                    final dateParts = parts[0].split('-');
+                    final timeParts = parts[1].split(':');
+                    timestamp = DateTime(
+                      int.parse(dateParts[0]), // year
+                      int.parse(dateParts[1]), // month
+                      int.parse(dateParts[2]), // day
+                      int.parse(timeParts[0]), // hour
+                      int.parse(timeParts[1]), // minute
+                      int.parse(timeParts[2]), // second
+                    );
+                  } else {
+                    // 날짜만 있는 경우
+                    final date = DateTime.parse(actualTimeStr);
+                    timestamp = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      23,
+                      59,
+                      0,
+                    );
+                  }
                 } catch (e) {
+                  print('Error parsing timestamp: $e');
                   timestamp = DateTime.now();
                 }
                 
@@ -119,21 +205,28 @@ class ClienService {
                   timestamp: timestamp,
                   url: url,
                 ));
+                print('Successfully added post: $title');
+              } else {
+                print('Missing required elements for post');
               }
             } catch (e) {
+              print('Error processing post: $e');
               continue;
             }
           }
         }
         
+        print('Total posts parsed: ${posts.length}');
         // Always increment page number for next request
         _currentPage += 1;
         
         return posts;
       } else {
+        print('Failed to load posts: ${response.statusCode}');
         throw Exception('Failed to load posts: ${response.statusCode}');
       }
     } catch (e) {
+      print('Error fetching posts: $e');
       throw Exception('Error fetching posts: $e');
     } finally {
       client.close();
