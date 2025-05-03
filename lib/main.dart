@@ -36,11 +36,12 @@ class PostListScreen extends StatefulWidget {
 class _PostListScreenState extends State<PostListScreen> {
   final ClienService _clienService = ClienService();
   final DdanziService _ddanziService = DdanziService();
-  final List<Post> _posts = [];
+  List<Post> _posts = [];
   bool _isLoading = false;
-  bool _isRefreshing = false;
+  bool _isDisposed = false;
+  String _selectedBoard = 'all'; // 기본값을 'all'로 변경
   final ScrollController _scrollController = ScrollController();
-  String _selectedBoard = 'clien'; // 'clien' or 'ddanzi'
+  Post? _selectedPost;
 
   @override
   void initState() {
@@ -51,6 +52,7 @@ class _PostListScreenState extends State<PostListScreen> {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _scrollController.dispose();
     super.dispose();
   }
@@ -68,127 +70,173 @@ class _PostListScreenState extends State<PostListScreen> {
   }
 
   Future<void> _loadPosts() async {
-    if (_isLoading) {
-      return;
-    }
-
+    if (_isDisposed) return;
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final newPosts = await (_selectedBoard == 'clien' 
-          ? _clienService.getPosts(refresh: _isRefreshing)
-          : _ddanziService.getPosts(refresh: _isRefreshing));
+      List<Post> posts = [];
       
-      if (mounted) {
+      if (_selectedBoard == 'all' || _selectedBoard == 'clien') {
+        final clienPosts = await _clienService.getPosts(refresh: true);
+        posts.addAll(clienPosts.map((post) => Post(
+          title: '[클리앙] ${post.title}',
+          author: post.author,
+          views: post.views,
+          timestamp: post.timestamp,
+          url: post.url,
+        )));
+      }
+      
+      if (_selectedBoard == 'all' || _selectedBoard == 'ddanzi') {
+        final ddanziPosts = await _ddanziService.getPosts(refresh: true);
+        posts.addAll(ddanziPosts.map((post) => Post(
+          title: '[딴지] ${post.title}',
+          author: post.author,
+          views: post.views,
+          timestamp: post.timestamp,
+          url: post.url,
+        )));
+      }
+
+      if (_selectedBoard == 'all') {
+        // 전체보기일 경우 시간순으로 정렬
+        posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      }
+
+      if (!_isDisposed) {
         setState(() {
-          if (_isRefreshing) {
-            _posts.clear();
-            _isRefreshing = false;
-          }
-          _posts.addAll(newPosts);
+          _posts = posts;
+          _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading posts: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
+      if (!_isDisposed) {
         setState(() {
           _isLoading = false;
         });
       }
+      print('Error loading posts: $e');
     }
-  }
-
-  Future<void> _onRefresh() async {
-    setState(() {
-      _isRefreshing = true;
-    });
-    await _loadPosts();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('게시판'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(_selectedBoard == 'all' ? '전체보기' : 
+                    _selectedBoard == 'clien' ? '클리앙' : '딴지일보'),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (String value) {
-              setState(() {
-                _selectedBoard = value;
-                _posts.clear();
-                _isRefreshing = true;
-                _loadPosts();
-              });
-            },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem(
-                value: 'clien',
-                child: Text('클리앙'),
-              ),
-              const PopupMenuItem(
-                value: 'ddanzi',
-                child: Text('딴지일보'),
-              ),
-            ],
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadPosts,
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        child: ListView.builder(
-          controller: _scrollController,
-          itemCount: _posts.length + (_isLoading ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == _posts.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                '게시판 선택',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
                 ),
-              );
-            }
+              ),
+            ),
+            ListTile(
+              title: const Text('전체보기'),
+              selected: _selectedBoard == 'all',
+              onTap: () {
+                setState(() {
+                  _selectedBoard = 'all';
+                });
+                _loadPosts();
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('클리앙'),
+              selected: _selectedBoard == 'clien',
+              onTap: () {
+                setState(() {
+                  _selectedBoard = 'clien';
+                });
+                _loadPosts();
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('딴지일보'),
+              selected: _selectedBoard == 'ddanzi',
+              onTap: () {
+                setState(() {
+                  _selectedBoard = 'ddanzi';
+                });
+                _loadPosts();
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadPosts,
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _posts.length + (_isLoading ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _posts.length) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
 
-            final post = _posts[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              child: ListTile(
-                title: Text(
-                  post.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(post.author),
-                    const SizedBox(width: 16),
-                    Text('${post.views}'),
-                    const SizedBox(width: 16),
-                    Text(_formatTimestamp(post.timestamp)),
-                  ],
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PostDetailScreen(post: post),
+                  final post = _posts[index];
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    child: ListTile(
+                      title: Text(
+                        post.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(post.author),
+                          const SizedBox(width: 16),
+                          Text('${post.views}'),
+                          const SizedBox(width: 16),
+                          Text(_formatTimestamp(post.timestamp)),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostDetailScreen(post: post),
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
               ),
-            );
-          },
-        ),
-      ),
+            ),
     );
   }
 
