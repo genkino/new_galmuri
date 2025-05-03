@@ -220,6 +220,7 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   late final WebViewController controller;
   bool isLoading = true;
+  bool isDisposed = false;
 
   @override
   void initState() {
@@ -229,30 +230,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
-            print('WebView started loading: $url');
-            setState(() {
-              isLoading = true;
-            });
+            if (!isDisposed) {
+              setState(() {
+                isLoading = true;
+              });
+            }
           },
           onPageFinished: (String url) {
-            print('WebView finished loading: $url');
-            setState(() {
-              isLoading = false;
-            });
+            if (!isDisposed) {
+              setState(() {
+                isLoading = false;
+              });
+            }
           },
           onWebResourceError: (WebResourceError error) {
-            print('WebView error: ${error.description}');
-            print('Error code: ${error.errorCode}');
-            print('Error type: ${error.errorType}');
-            setState(() {
-              isLoading = false;
-            });
+            if (!isDisposed) {
+              setState(() {
+                isLoading = false;
+              });
+            }
           },
         ),
       )
       ..setBackgroundColor(Colors.white)
       ..setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1')
       ..loadRequest(Uri.parse(widget.post.url));
+  }
+
+  @override
+  void dispose() {
+    isDisposed = true;
+    super.dispose();
   }
 
   @override
