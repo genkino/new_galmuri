@@ -116,7 +116,7 @@ class _PostListScreenState extends State<PostListScreen> {
       
       if (_selectedBoard == BoardType.all) {
         for (var service in _services.values) {
-          final servicePosts = await service.getPosts(refresh: true);
+          final servicePosts = await service.getPosts();
           posts.addAll(servicePosts.map((post) => Post(
             title: '[${service.boardDisplayName}] ${post.title}',
             author: post.author,
@@ -130,14 +130,14 @@ class _PostListScreenState extends State<PostListScreen> {
       } else {
         final service = _services[_selectedBoard.name];
         if (service != null) {
-          final servicePosts = await service.getPosts(refresh: true);
+          final servicePosts = await service.getPosts();
           posts.addAll(servicePosts);
         }
       }
 
       if (!_isDisposed) {
         setState(() {
-          _posts = posts;
+          _posts.addAll(posts);
           _isLoading = false;
         });
       }
