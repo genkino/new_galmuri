@@ -6,6 +6,7 @@ import 'models/post.dart';
 import 'services/base_service.dart';
 import 'services/clien_service.dart';
 import 'services/ddanzi_service.dart';
+import 'services/theqoo_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,9 +18,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Board Viewer',
+      title: '게시판 통합 뷰어',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
       home: const PostListScreen(),
@@ -38,6 +39,7 @@ class _PostListScreenState extends State<PostListScreen> {
   final Map<String, BaseBoardService> _services = {
     'clien': ClienService(),
     'ddanzi': DdanziService(),
+    'theqoo': TheqooService(),
   };
   
   List<Post> _posts = [];
@@ -92,7 +94,7 @@ class _PostListScreenState extends State<PostListScreen> {
             views: post.views,
             timestamp: post.timestamp,
             url: post.url,
-          )));
+          )).toList());
         }
         // 전체보기일 경우 시간순으로 정렬
         posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -125,7 +127,8 @@ class _PostListScreenState extends State<PostListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_selectedBoard == 'all' ? '전체보기' : 
-                    _selectedBoard == 'clien' ? '클리앙' : '딴지일보'),
+                    _selectedBoard == 'clien' ? '클리앙' : 
+                    _selectedBoard == 'ddanzi' ? '딴지일보' : '더쿠'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -177,6 +180,17 @@ class _PostListScreenState extends State<PostListScreen> {
               onTap: () {
                 setState(() {
                   _selectedBoard = 'ddanzi';
+                });
+                _loadPosts();
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('더쿠'),
+              selected: _selectedBoard == 'theqoo',
+              onTap: () {
+                setState(() {
+                  _selectedBoard = 'theqoo';
                 });
                 _loadPosts();
                 Navigator.pop(context);
