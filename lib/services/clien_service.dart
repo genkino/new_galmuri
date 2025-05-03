@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
+import 'package:html/dom.dart' as dom;
 import '../models/post.dart';
 import 'base_service.dart';
 
@@ -32,14 +33,14 @@ class ClienService extends BaseBoardService {
   };
   
   @override
-  String get postListSelector => 'div.list_item, div.list_row';
+  String get postListSelector => 'div.list_item';
   
   @override
   Map<String, String> get selectors => {
     'title': 'span.subject_fixed, span.subject, a.subject, div.subject',
     'author': 'span.nickname, span.nick, div.nickname',
     'views': 'span.hit',
-    'time': 'span.timestamp, span.time, div.time',
+    'time': 'span.timestamp',
     'link': 'a.list_subject, a.subject, div.subject a',
   };
   
@@ -72,10 +73,10 @@ class ClienService extends BaseBoardService {
     final views = int.tryParse(viewsElement.text.trim().replaceAll(',', '')) ?? 0;
     
     final timeStr = timeElement.attributes['data-timestamp'] ?? timeElement.text.trim();
-    final timeLines = timeStr.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
-    final actualTimeStr = timeLines.last;
+
+    print('timeStr: $timeStr');
     
-    final timestamp = parseTimestamp(actualTimeStr);
+    final timestamp = parseTimestamp(timeStr);
     final url = buildFullUrl(linkElement.attributes['href'] ?? '');
     
     return Post(
@@ -85,222 +86,5 @@ class ClienService extends BaseBoardService {
       timestamp: timestamp,
       url: url,
     );
-  }
-  
-  int _currentPage = 0;
-  
-  Future<List<Post>> getPosts({bool refresh = false}) async {
-    if (refresh) {
-      _currentPage = 0;
-    }
-    
-    final client = http.Client();
-    try {
-      final url = buildUrl();
-      print('Fetching URL: $url');
-      
-      final response = await client.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-      
-      if (response.statusCode == 200) {
-        print('Response status: ${response.statusCode}');
-        final document = parser.parse(response.body);
-        final posts = <Post>[];
-        
-        // Find all post items in the page
-        final postElements = document.querySelectorAll(postListSelector);
-        print('Found ${postElements.length} post elements');
-        
-        if (postElements.isEmpty) {
-          // Try alternative selectors
-          final alternativeElements = document.querySelectorAll('div.list_row');
-          print('Trying alternative selectors, found ${alternativeElements.length} elements');
-          
-          for (var element in alternativeElements) {
-            try {
-              final titleElement = element.querySelector('span.subject_fixed, span.subject, a.subject, div.subject');
-              final authorElement = element.querySelector('span.nickname, span.nick, div.nickname');
-              final viewsElement = element.querySelector('span.hit');
-              final timeElement = element.querySelector('span.timestamp');
-              final linkElement = element.querySelector('a.list_subject, a.subject, div.subject a');
-              
-              print('Parsing post:');
-              print('Title element: ${titleElement?.text}');
-              print('Author element: ${authorElement?.text}');
-              print('Views element: ${viewsElement?.text}');
-              print('Time element: ${timeElement?.text}');
-              print('Link element: ${linkElement?.attributes['href']}');
-              
-              if (titleElement != null && authorElement != null && 
-                  viewsElement != null && timeElement != null && linkElement != null) {
-                
-                final title = titleElement.text.trim();
-                final author = authorElement.text.trim();
-                final views = int.tryParse(viewsElement.text.trim().replaceAll(',', '')) ?? 0;
-                
-                // Handle timestamp parsing
-                DateTime timestamp;
-                try {
-                  final timeStr = timeElement.attributes['data-timestamp'] ?? timeElement.text.trim();
-                  print('Parsing timestamp: $timeStr');
-                  
-                  // 여러 줄의 시간 문자열이 있는 경우 마지막 줄 사용
-                  final timeLines = timeStr.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
-                  final actualTimeStr = timeLines.last;
-                  print('Using time string: $actualTimeStr');
-                  
-                  if (actualTimeStr.contains(':')) {
-                    // YYYY-MM-DD HH:mm:ss 형식
-                    final parts = actualTimeStr.split(' ');
-                    final dateParts = parts[0].split('-');
-                    final timeParts = parts[1].split(':');
-                    timestamp = DateTime(
-                      int.parse(dateParts[0]), // year
-                      int.parse(dateParts[1]), // month
-                      int.parse(dateParts[2]), // day
-                      int.parse(timeParts[0]), // hour
-                      int.parse(timeParts[1]), // minute
-                      int.parse(timeParts[2]), // second
-                    );
-                  } else {
-                    // 날짜만 있는 경우
-                    final date = DateTime.parse(actualTimeStr);
-                    timestamp = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                      23,
-                      59,
-                      0,
-                    );
-                  }
-                } catch (e) {
-                  print('Error parsing timestamp: $e');
-                  timestamp = DateTime.now();
-                }
-                
-                final url = 'https://www.clien.net${linkElement.attributes['href']}';
-                
-                posts.add(Post(
-                  title: title,
-                  author: author,
-                  views: views,
-                  timestamp: timestamp,
-                  url: url,
-                ));
-                print('Successfully added post: $title');
-              } else {
-                print('Missing required elements for post');
-              }
-            } catch (e) {
-              print('Error processing post: $e');
-              continue;
-            }
-          }
-        } else {
-          for (var element in postElements) {
-            try {
-              final titleElement = element.querySelector('span.subject_fixed, span.subject, a.subject, div.subject');
-              final authorElement = element.querySelector('span.nickname, span.nick, div.nickname');
-              final viewsElement = element.querySelector('span.hit');
-              final timeElement = element.querySelector('span.timestamp, span.time, div.time');
-              final linkElement = element.querySelector('a.list_subject, a.subject, div.subject a');
-              
-              print('Parsing post:');
-              print('Title element: ${titleElement?.text}');
-              print('Author element: ${authorElement?.text}');
-              print('Views element: ${viewsElement?.text}');
-              print('Time element: ${timeElement?.text}');
-              print('Link element: ${linkElement?.attributes['href']}');
-              
-              if (titleElement != null && authorElement != null && 
-                  viewsElement != null && timeElement != null && linkElement != null) {
-                
-                final title = titleElement.text.trim();
-                final author = authorElement.text.trim();
-                final views = int.tryParse(viewsElement.text.trim().replaceAll(',', '')) ?? 0;
-                
-                // Handle timestamp parsing
-                DateTime timestamp;
-                try {
-                  final timeStr = timeElement.attributes['data-timestamp'] ?? timeElement.text.trim();
-                  print('Parsing timestamp: $timeStr');
-                  
-                  // 여러 줄의 시간 문자열이 있는 경우 마지막 줄 사용
-                  final timeLines = timeStr.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
-                  final actualTimeStr = timeLines.last;
-                  print('Using time string: $actualTimeStr');
-                  
-                  if (actualTimeStr.contains(':')) {
-                    // YYYY-MM-DD HH:mm:ss 형식
-                    final parts = actualTimeStr.split(' ');
-                    final dateParts = parts[0].split('-');
-                    final timeParts = parts[1].split(':');
-                    timestamp = DateTime(
-                      int.parse(dateParts[0]), // year
-                      int.parse(dateParts[1]), // month
-                      int.parse(dateParts[2]), // day
-                      int.parse(timeParts[0]), // hour
-                      int.parse(timeParts[1]), // minute
-                      int.parse(timeParts[2]), // second
-                    );
-                  } else {
-                    // 날짜만 있는 경우
-                    final date = DateTime.parse(actualTimeStr);
-                    timestamp = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                      23,
-                      59,
-                      0,
-                    );
-                  }
-                } catch (e) {
-                  print('Error parsing timestamp: $e');
-                  timestamp = DateTime.now();
-                }
-                
-                final url = 'https://www.clien.net${linkElement.attributes['href']}';
-                
-                posts.add(Post(
-                  title: title,
-                  author: author,
-                  views: views,
-                  timestamp: timestamp,
-                  url: url,
-                ));
-                print('Successfully added post: $title');
-              } else {
-                print('Missing required elements for post');
-              }
-            } catch (e) {
-              print('Error processing post: $e');
-              continue;
-            }
-          }
-        }
-        
-        print('Total posts parsed: ${posts.length}');
-        // Always increment page number for next request
-        _currentPage += 1;
-        
-        return posts;
-      } else {
-        print('Failed to load posts: ${response.statusCode}');
-        throw Exception('Failed to load posts: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching posts: $e');
-      throw Exception('Error fetching posts: $e');
-    } finally {
-      client.close();
-    }
-  }
-  
-  void dispose() {
-    // No need to close client here anymore
-  }
+  }  
 } 

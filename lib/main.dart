@@ -7,8 +7,12 @@ import 'services/base_service.dart';
 import 'services/clien_service.dart';
 import 'services/ddanzi_service.dart';
 import 'services/theqoo_service.dart';
+import 'screens/settings_screen.dart';
+import 'database/database_helper.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
   runApp(const MyApp());
 }
 
@@ -48,12 +52,17 @@ class _PostListScreenState extends State<PostListScreen> {
   String _selectedBoard = 'all';
   final ScrollController _scrollController = ScrollController();
   Post? _selectedPost;
+  final _dbHelper = DatabaseHelper();
 
   @override
   void initState() {
     super.initState();
-    _loadPosts();
+    _initializeServices();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _initializeServices() async {
+    _loadPosts();
   }
 
   @override
@@ -130,6 +139,17 @@ class _PostListScreenState extends State<PostListScreen> {
                     _selectedBoard == 'clien' ? '클리앙' : 
                     _selectedBoard == 'ddanzi' ? '딴지일보' : '더쿠'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(services: _services),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadPosts,
