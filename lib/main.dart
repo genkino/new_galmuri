@@ -10,6 +10,26 @@ import 'services/theqoo_service.dart';
 import 'screens/settings_screen.dart';
 import 'database/database_helper.dart';
 
+enum BoardType {
+  all,
+  clien,
+  ddanzi,
+  theqoo;
+
+  String get displayName {
+    switch (this) {
+      case BoardType.all:
+        return '전체보기';
+      case BoardType.clien:
+        return '클리앙';
+      case BoardType.ddanzi:
+        return '딴지일보';
+      case BoardType.theqoo:
+        return '더쿠';
+    }
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -49,7 +69,7 @@ class _PostListScreenState extends State<PostListScreen> {
   List<Post> _posts = [];
   bool _isLoading = false;
   bool _isDisposed = false;
-  String _selectedBoard = 'all';
+  BoardType _selectedBoard = BoardType.all;
   final ScrollController _scrollController = ScrollController();
   Post? _selectedPost;
   final _dbHelper = DatabaseHelper();
@@ -94,7 +114,7 @@ class _PostListScreenState extends State<PostListScreen> {
     try {
       List<Post> posts = [];
       
-      if (_selectedBoard == 'all') {
+      if (_selectedBoard == BoardType.all) {
         for (var service in _services.values) {
           final servicePosts = await service.getPosts(refresh: true);
           posts.addAll(servicePosts.map((post) => Post(
@@ -108,7 +128,7 @@ class _PostListScreenState extends State<PostListScreen> {
         // 전체보기일 경우 시간순으로 정렬
         posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       } else {
-        final service = _services[_selectedBoard];
+        final service = _services[_selectedBoard.name];
         if (service != null) {
           final servicePosts = await service.getPosts(refresh: true);
           posts.addAll(servicePosts);
@@ -135,9 +155,7 @@ class _PostListScreenState extends State<PostListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedBoard == 'all' ? '전체보기' : 
-                    _selectedBoard == 'clien' ? '클리앙' : 
-                    _selectedBoard == 'ddanzi' ? '딴지일보' : '더쿠'),
+        title: Text(_selectedBoard.displayName),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -172,50 +190,17 @@ class _PostListScreenState extends State<PostListScreen> {
                 ),
               ),
             ),
-            ListTile(
-              title: const Text('전체보기'),
-              selected: _selectedBoard == 'all',
+            ...BoardType.values.map((boardType) => ListTile(
+              title: Text(boardType.displayName),
+              selected: _selectedBoard == boardType,
               onTap: () {
                 setState(() {
-                  _selectedBoard = 'all';
+                  _selectedBoard = boardType;
                 });
                 _loadPosts();
                 Navigator.pop(context);
               },
-            ),
-            ListTile(
-              title: const Text('클리앙'),
-              selected: _selectedBoard == 'clien',
-              onTap: () {
-                setState(() {
-                  _selectedBoard = 'clien';
-                });
-                _loadPosts();
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('딴지일보'),
-              selected: _selectedBoard == 'ddanzi',
-              onTap: () {
-                setState(() {
-                  _selectedBoard = 'ddanzi';
-                });
-                _loadPosts();
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('더쿠'),
-              selected: _selectedBoard == 'theqoo',
-              onTap: () {
-                setState(() {
-                  _selectedBoard = 'theqoo';
-                });
-                _loadPosts();
-                Navigator.pop(context);
-              },
-            ),
+            )),
           ],
         ),
       ),
