@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'models/post.dart';
+import 'services/base_service.dart';
 import 'services/clien_service.dart';
 import 'services/ddanzi_service.dart';
 
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Clien.net',
+      title: 'Board Viewer',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -34,12 +35,15 @@ class PostListScreen extends StatefulWidget {
 }
 
 class _PostListScreenState extends State<PostListScreen> {
-  final ClienService _clienService = ClienService();
-  final DdanziService _ddanziService = DdanziService();
+  final Map<String, BaseBoardService> _services = {
+    'clien': ClienService(),
+    'ddanzi': DdanziService(),
+  };
+  
   List<Post> _posts = [];
   bool _isLoading = false;
   bool _isDisposed = false;
-  String _selectedBoard = 'all'; // 기본값을 'all'로 변경
+  String _selectedBoard = 'all';
   final ScrollController _scrollController = ScrollController();
   Post? _selectedPost;
 
@@ -79,31 +83,25 @@ class _PostListScreenState extends State<PostListScreen> {
     try {
       List<Post> posts = [];
       
-      if (_selectedBoard == 'all' || _selectedBoard == 'clien') {
-        final clienPosts = await _clienService.getPosts(refresh: true);
-        posts.addAll(clienPosts.map((post) => Post(
-          title: '[클리앙] ${post.title}',
-          author: post.author,
-          views: post.views,
-          timestamp: post.timestamp,
-          url: post.url,
-        )));
-      }
-      
-      if (_selectedBoard == 'all' || _selectedBoard == 'ddanzi') {
-        final ddanziPosts = await _ddanziService.getPosts(refresh: true);
-        posts.addAll(ddanziPosts.map((post) => Post(
-          title: '[딴지] ${post.title}',
-          author: post.author,
-          views: post.views,
-          timestamp: post.timestamp,
-          url: post.url,
-        )));
-      }
-
       if (_selectedBoard == 'all') {
+        for (var service in _services.values) {
+          final servicePosts = await service.getPosts(refresh: true);
+          posts.addAll(servicePosts.map((post) => Post(
+            title: '[${service.boardDisplayName}] ${post.title}',
+            author: post.author,
+            views: post.views,
+            timestamp: post.timestamp,
+            url: post.url,
+          )));
+        }
         // 전체보기일 경우 시간순으로 정렬
         posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      } else {
+        final service = _services[_selectedBoard];
+        if (service != null) {
+          final servicePosts = await service.getPosts(refresh: true);
+          posts.addAll(servicePosts);
+        }
       }
 
       if (!_isDisposed) {
@@ -187,55 +185,52 @@ class _PostListScreenState extends State<PostListScreen> {
           ],
         ),
       ),
-      body: _isLoading
+      body: _isLoading && _posts.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadPosts,
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _posts.length + (_isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == _posts.length) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-
-                  final post = _posts[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                    child: ListTile(
-                      title: Text(
-                        post.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(post.author),
-                          const SizedBox(width: 16),
-                          Text('${post.views}'),
-                          const SizedBox(width: 16),
-                          Text(_formatTimestamp(post.timestamp)),
-                        ],
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PostDetailScreen(post: post),
-                          ),
-                        );
-                      },
+          : ListView.builder(
+              controller: _scrollController,
+              itemCount: _posts.length + (_isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == _posts.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
                     ),
                   );
-                },
-              ),
+                }
+                
+                final post = _posts[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: ListTile(
+                    title: Text(
+                      post.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(post.author),
+                        const SizedBox(width: 16),
+                        Text('${post.views}'),
+                        const SizedBox(width: 16),
+                        Text(_formatTimestamp(post.timestamp)),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostDetailScreen(post: post),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
     );
   }
