@@ -6,7 +6,6 @@ import '../models/post.dart';
 class ClienService {
   static const String baseUrl = 'https://www.clien.net/service/group/clien_all';
   
-  final _client = http.Client();
   int _currentPage = 0;
   
   Future<List<Post>> getPosts({bool refresh = false}) async {
@@ -14,10 +13,11 @@ class ClienService {
       _currentPage = 0;
     }
     
+    final client = http.Client();
     try {
       final url = '$baseUrl?od=T31&po=$_currentPage';
       
-      final response = await _client.get(
+      final response = await client.get(
         Uri.parse(url),
         headers: {
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -135,10 +135,12 @@ class ClienService {
       }
     } catch (e) {
       throw Exception('Error fetching posts: $e');
+    } finally {
+      client.close();
     }
   }
   
   void dispose() {
-    _client.close();
+    // No need to close client here anymore
   }
 } 

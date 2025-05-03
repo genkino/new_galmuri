@@ -57,10 +57,7 @@ class _PostListScreenState extends State<PostListScreen> {
       final currentScroll = _scrollController.position.pixels;
       final delta = MediaQuery.of(context).size.height * 0.2;
       
-      print('Scroll position: $currentScroll / $maxScroll'); // Debug log
-      
       if (maxScroll - currentScroll <= delta) {
-        print('Reached end of scroll, loading more posts...'); // Debug log
         _loadPosts();
       }
     }
@@ -68,7 +65,6 @@ class _PostListScreenState extends State<PostListScreen> {
 
   Future<void> _loadPosts() async {
     if (_isLoading) {
-      print('Already loading posts, skipping...'); // Debug log
       return;
     }
 
@@ -77,9 +73,7 @@ class _PostListScreenState extends State<PostListScreen> {
     });
 
     try {
-      print('Loading posts...'); // Debug log
       final newPosts = await _clienService.getPosts(refresh: _isRefreshing);
-      print('Loaded ${newPosts.length} new posts'); // Debug log
       
       if (mounted) {
         setState(() {
@@ -142,18 +136,16 @@ class _PostListScreenState extends State<PostListScreen> {
                   post.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                subtitle: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text('작성자: ${post.author}'),
-                    Row(
-                      children: [
-                        Text('조회수: ${post.views}'),
-                        const SizedBox(width: 16),
-                        Text('작성시간: ${_formatTimestamp(post.timestamp)}'),
-                      ],
-                    ),
+                    Text(post.author),
+                    const SizedBox(width: 16),
+                    Text('${post.views}'),
+                    const SizedBox(width: 16),
+                    Text(_formatTimestamp(post.timestamp)),
                   ],
                 ),
                 onTap: () {
