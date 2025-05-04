@@ -11,49 +11,7 @@ import 'screens/settings_screen.dart';
 import 'database/database_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'widgets/post_card.dart';
-
-enum BoardType {
-  all,
-  clien,
-  ddanzi,
-  theqoo,
-  etoland,
-  dcinside;
-
-  String get displayName {
-    switch (this) {
-      case BoardType.all:
-        return '전체보기';
-      case BoardType.clien:
-        return '클리앙';
-      case BoardType.ddanzi:
-        return '딴지일보';
-      case BoardType.theqoo:
-        return '더쿠';
-      case BoardType.etoland:
-        return '이토랜드';
-        case BoardType.dcinside:
-        return '디씨인사이드';
-    }
-  }
-
-  String get serviceKey {
-    switch (this) {
-      case BoardType.all:
-        return 'all';
-      case BoardType.clien:
-        return 'clien';
-      case BoardType.ddanzi:
-        return 'ddanzi';
-      case BoardType.theqoo:
-        return 'theqoo';
-      case BoardType.etoland:
-        return 'etoland';
-        case BoardType.dcinside:
-        return 'dcinside';
-    }
-  }
-}
+import 'models/board_type.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -287,7 +245,7 @@ class _PostListScreenState extends State<PostListScreen> {
                         case '이토랜드':
                           serviceKey = 'etoland';
                           break;
-                        case '디시인사이드':
+                        case '디씨인사이드':
                           serviceKey = 'dcinside';
                           break;
                       }
