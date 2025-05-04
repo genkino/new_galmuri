@@ -117,7 +117,7 @@ class TheqooService extends BaseBoardService {
     print('URL: $url');
     
     return Post(
-      title: '[더쿠] $cleanTitle',  // 제목 앞에 [더쿠] 추가
+      title: '$cleanTitle',  // 제목 앞에 [더쿠] 추가
       author: '',  // 빈 값으로 설정
       views: views,
       timestamp: timestamp,
