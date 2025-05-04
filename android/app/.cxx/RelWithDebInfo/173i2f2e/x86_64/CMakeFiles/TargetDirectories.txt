@@ -1,2 +1,0 @@
-/Users/genkino/workspace/new_galmuri/android/app/.cxx/RelWithDebInfo/173i2f2e/x86_64/CMakeFiles/edit_cache.dir
-/Users/genkino/workspace/new_galmuri/android/app/.cxx/RelWithDebInfo/173i2f2e/x86_64/CMakeFiles/rebuild_cache.dir

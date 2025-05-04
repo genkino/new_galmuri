@@ -1,1 +1,0 @@
-/Users/genkino/workspace/new_galmuri/build/app/intermediates/cxx/RelWithDebInfo/10724d4y/obj/arm64-v8a
