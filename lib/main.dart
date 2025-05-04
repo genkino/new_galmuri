@@ -276,13 +276,19 @@ class _PostListScreenState extends State<PostListScreen> {
                 } else {
                   serviceKey = _selectedBoard.serviceKey;
                 }
+
+                final service = _services[serviceKey];
+                if (service == null) {
+                  return const SizedBox.shrink();  // 서비스를 찾을 수 없는 경우 빈 위젯 반환
+                }
+
                 return PostCard(
                   title: post.title,
                   author: post.author,
                   views: post.views,
                   timestamp: post.timestamp,
                   url: post.url,
-                  service: _services[serviceKey],
+                  service: service,
                 );
               },
             ),

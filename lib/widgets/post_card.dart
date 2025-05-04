@@ -9,7 +9,7 @@ class PostCard extends StatelessWidget {
   final int views;
   final DateTime timestamp;
   final String url;
-  final BaseBoardService? service;
+  final BaseBoardService service;
 
   const PostCard({
     Key? key,
@@ -18,7 +18,7 @@ class PostCard extends StatelessWidget {
     required this.views,
     required this.timestamp,
     required this.url,
-    this.service,
+    required this.service,
   }) : super(key: key);
 
   // 제목에서 사이트 이름 추출
@@ -29,19 +29,12 @@ class PostCard extends StatelessWidget {
 
   // 사이트 이름의 첫 글자 추출
   String _getSiteInitial() {
-    if (service != null) {
-      return service!.boardDisplayName[0];
-    }
-    final siteName = _getSiteName();
-    return siteName.isNotEmpty ? siteName[0] : '';
+    return service.boardDisplayName[0];
   }
 
   // 사이트별 색상 가져오기
   Color _getSiteColor() {
-    if (service != null) {
-      return service!.boardColor;
-    }
-    return Colors.grey;
+    return service.boardColor;
   }
 
   String _formatDate(DateTime date) {
