@@ -28,6 +28,19 @@ enum BoardType {
         return '더쿠';
     }
   }
+
+  String get serviceKey {
+    switch (this) {
+      case BoardType.all:
+        return 'all';
+      case BoardType.clien:
+        return 'clien';
+      case BoardType.ddanzi:
+        return 'ddanzi';
+      case BoardType.theqoo:
+        return 'theqoo';
+    }
+  }
 }
 
 void main() {
@@ -78,12 +91,8 @@ class _PostListScreenState extends State<PostListScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeServices();
-    _scrollController.addListener(_onScroll);
-  }
-
-  Future<void> _initializeServices() async {
     _loadPosts();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -129,8 +138,9 @@ class _PostListScreenState extends State<PostListScreen> {
         // 전체보기일 경우 시간순으로 정렬
         posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       } else {
-        final service = _services[_selectedBoard.name];
+        final service = _services[_selectedBoard.serviceKey];
         if (service != null) {
+          service.currentPage = _currentPage - 1;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
           posts.addAll(servicePosts);
         }
@@ -205,6 +215,8 @@ class _PostListScreenState extends State<PostListScreen> {
               onTap: () {
                 setState(() {
                   _selectedBoard = boardType;
+                  _posts = [];
+                  _currentPage = 1;
                 });
                 _loadPosts();
                 Navigator.pop(context);
