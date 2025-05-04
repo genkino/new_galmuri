@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as parser;
 import '../models/post.dart';
 import 'base_service.dart';
 import 'package:intl/intl.dart';
@@ -74,7 +71,7 @@ class TheqooService extends BaseBoardService {
     }
     
     final title = titleElement.text.trim();
-    final author = "";
+    const author = "";
     final views = int.tryParse(viewsElement.text.trim().replaceAll(',', '')) ?? 0;
     
     final timeStr = timeElement.text.trim();

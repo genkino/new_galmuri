@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/base_service.dart';
-import '../services/clien_service.dart';
-import '../services/ddanzi_service.dart';
-import '../services/theqoo_service.dart';
 import '../database/database_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
