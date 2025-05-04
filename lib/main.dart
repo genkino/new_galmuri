@@ -5,6 +5,7 @@ import 'services/base_service.dart';
 import 'services/clien_service.dart';
 import 'services/ddanzi_service.dart';
 import 'services/theqoo_service.dart';
+import 'services/etoland_service.dart';
 import 'screens/settings_screen.dart';
 import 'database/database_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,7 +15,8 @@ enum BoardType {
   all,
   clien,
   ddanzi,
-  theqoo;
+  theqoo,
+  etoland;
 
   String get displayName {
     switch (this) {
@@ -26,6 +28,8 @@ enum BoardType {
         return '딴지일보';
       case BoardType.theqoo:
         return '더쿠';
+      case BoardType.etoland:
+        return '이토랜드';
     }
   }
 
@@ -39,6 +43,8 @@ enum BoardType {
         return 'ddanzi';
       case BoardType.theqoo:
         return 'theqoo';
+      case BoardType.etoland:
+        return 'etoland';
     }
   }
 }
@@ -77,6 +83,7 @@ class _PostListScreenState extends State<PostListScreen> {
     'clien': ClienService(),
     'ddanzi': DdanziService(),
     'theqoo': TheqooService(),
+    'etoland': EtolandService(),
   };
   
   List<Post> _posts = [];
@@ -269,6 +276,9 @@ class _PostListScreenState extends State<PostListScreen> {
                           break;
                         case '더쿠':
                           serviceKey = 'theqoo';
+                          break;
+                        case '이토랜드':
+                          serviceKey = 'etoland';
                           break;
                       }
                     }
