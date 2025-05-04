@@ -73,6 +73,7 @@ class _PostListScreenState extends State<PostListScreen> {
   final ScrollController _scrollController = ScrollController();
   Post? _selectedPost;
   final _dbHelper = DatabaseHelper();
+  int _currentPage = 1;
 
   @override
   void initState() {
@@ -151,6 +152,14 @@ class _PostListScreenState extends State<PostListScreen> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    setState(() {
+      _posts = [];
+      _currentPage = 1;
+    });
+    await _loadPosts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,7 +179,7 @@ class _PostListScreenState extends State<PostListScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadPosts,
+            onPressed: _onRefresh,
           ),
         ],
       ),
