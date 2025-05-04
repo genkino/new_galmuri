@@ -7,6 +7,7 @@ import 'services/ddanzi_service.dart';
 import 'services/theqoo_service.dart';
 import 'screens/settings_screen.dart';
 import 'database/database_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum BoardType {
   all,
@@ -245,53 +246,126 @@ class _PostListScreenState extends State<PostListScreen> {
                 }
                 
                 final post = _posts[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: ListTile(
-                    title: Text(
-                      post.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(post.author),
-                        const SizedBox(width: 16),
-                        Text('${post.views}'),
-                        const SizedBox(width: 16),
-                        Text(_formatTimestamp(post.timestamp)),
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PostDetailScreen(post: post),
-                        ),
-                      );
-                    },
-                  ),
+                return PostCard(
+                  title: post.title,
+                  author: post.author,
+                  views: post.views,
+                  timestamp: post.timestamp,
+                  url: post.url,
                 );
               },
             ),
     );
   }
+}
 
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
+class PostCard extends StatelessWidget {
+  final String title;
+  final String author;
+  final int views;
+  final DateTime timestamp;
+  final String url;
 
-    if (difference.inDays > 0) {
-      return '${difference.inDays}일 전';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}시간 전';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}분 전';
-    } else {
-      return '방금 전';
-    }
+  const PostCard({
+    Key? key,
+    required this.title,
+    required this.author,
+    required this.views,
+    required this.timestamp,
+    required this.url,
+  }) : super(key: key);
+
+  // 사이트별 색상 매핑
+  static final Map<String, Color> _siteColors = {
+    'clien': Color(0xFF0066CC),  // 클리앙 실제 메인 색상
+    'ddanzi': Color(0xFFD32F2F), // 딴지일보 메인 색상
+    'theqoo': Color(0xFFFF4081), // 더쿠 메인 색상
+  };
+
+  // 사이트 이름 매핑
+  static final Map<String, String> _siteNameMapping = {
+    '클리앙': 'clien',
+    '딴지일보': 'ddanzi',
+    '더쿠': 'theqoo',
+  };
+
+  // 제목에서 사이트 이름 추출
+  String _getSiteName() {
+    final match = RegExp(r'^\[(.*?)\]').firstMatch(title);
+    return match?.group(1) ?? '';
+  }
+
+  // 사이트 이름의 첫 글자 추출
+  String _getSiteInitial() {
+    final siteName = _getSiteName();
+    return siteName.isNotEmpty ? siteName[0] : '';
+  }
+
+  // 사이트별 색상 가져오기
+  Color _getSiteColor() {
+    final siteName = _getSiteName();
+    final serviceKey = _siteNameMapping[siteName] ?? '';
+    return _siteColors[serviceKey] ?? Colors.grey;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final siteName = _getSiteName();
+    final displayTitle = title.replaceFirst(RegExp(r'^\[.*?\]\s*'), '');
+
+    return Card(
+      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: _getSiteColor(),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              _getSiteInitial(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          displayTitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              '$author · $views · ${_formatDate(timestamp)}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        onTap: () async {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri);
+          }
+        },
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }
 
