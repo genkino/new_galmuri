@@ -86,7 +86,7 @@ class _PostListScreenState extends State<PostListScreen> {
   final ScrollController _scrollController = ScrollController();
   Post? _selectedPost;
   final _dbHelper = DatabaseHelper();
-  int _currentPage = 1;
+  int _currentPage = 0;
 
   @override
   void initState() {
@@ -126,6 +126,7 @@ class _PostListScreenState extends State<PostListScreen> {
       
       if (_selectedBoard == BoardType.all) {
         for (var service in _services.values) {
+          service.currentPage = _currentPage;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
           posts.addAll(servicePosts.map((post) => Post(
             title: '[${service.boardDisplayName}] ${post.title}',
@@ -140,7 +141,7 @@ class _PostListScreenState extends State<PostListScreen> {
       } else {
         final service = _services[_selectedBoard.serviceKey];
         if (service != null) {
-          service.currentPage = _currentPage - 1;  // 0-based index로 변환
+          service.currentPage = _currentPage;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
           posts.addAll(servicePosts);
         }
@@ -148,7 +149,12 @@ class _PostListScreenState extends State<PostListScreen> {
 
       if (!_isDisposed) {
         setState(() {
-          _posts.addAll(posts);
+          if (_currentPage == 0) {
+            _posts = posts;  // 첫 페이지일 경우 목록 교체
+          } else {
+            _posts.addAll(posts);  // 다음 페이지일 경우 목록 추가
+          }
+          _currentPage++;  // 페이지 번호 증가
           _isLoading = false;
         });
       }
@@ -165,7 +171,7 @@ class _PostListScreenState extends State<PostListScreen> {
   Future<void> _onRefresh() async {
     setState(() {
       _posts = [];
-      _currentPage = 1;
+      _currentPage = 0;
     });
     await _loadPosts();
   }
@@ -216,7 +222,7 @@ class _PostListScreenState extends State<PostListScreen> {
                 setState(() {
                   _selectedBoard = boardType;
                   _posts = [];
-                  _currentPage = 1;
+                  _currentPage = 0;
                 });
                 _loadPosts();
                 Navigator.pop(context);
