@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "com.genkino" "\0"
             VALUE "FileDescription", "new_galmuri" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "new_galmuri" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.genkino. All rights reserved." "\0"
             VALUE "OriginalFilename", "new_galmuri.exe" "\0"
             VALUE "ProductName", "new_galmuri" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
