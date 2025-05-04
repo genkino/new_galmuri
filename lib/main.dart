@@ -254,22 +254,26 @@ class _PostListScreenState extends State<PostListScreen> {
                 final post = _posts[index];
                 // 서비스 키 추출 로직 수정
                 String serviceKey = '';
-                if (post.title.startsWith('[')) {
-                  final endBracket = post.title.indexOf(']');
-                  if (endBracket != -1) {
-                    final siteName = post.title.substring(1, endBracket);
-                    switch (siteName) {
-                      case '클리앙':
-                        serviceKey = 'clien';
-                        break;
-                      case '딴지일보':
-                        serviceKey = 'ddanzi';
-                        break;
-                      case '더쿠':
-                        serviceKey = 'theqoo';
-                        break;
+                if (_selectedBoard == BoardType.all) {
+                  if (post.title.startsWith('[')) {
+                    final endBracket = post.title.indexOf(']');
+                    if (endBracket != -1) {
+                      final siteName = post.title.substring(1, endBracket);
+                      switch (siteName) {
+                        case '클리앙':
+                          serviceKey = 'clien';
+                          break;
+                        case '딴지일보':
+                          serviceKey = 'ddanzi';
+                          break;
+                        case '더쿠':
+                          serviceKey = 'theqoo';
+                          break;
+                      }
                     }
                   }
+                } else {
+                  serviceKey = _selectedBoard.serviceKey;
                 }
                 return PostCard(
                   title: post.title,
@@ -311,6 +315,9 @@ class PostCard extends StatelessWidget {
 
   // 사이트 이름의 첫 글자 추출
   String _getSiteInitial() {
+    if (service != null) {
+      return service!.boardDisplayName[0];
+    }
     final siteName = _getSiteName();
     return siteName.isNotEmpty ? siteName[0] : '';
   }
