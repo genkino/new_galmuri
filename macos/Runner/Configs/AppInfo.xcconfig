@@ -11,4 +11,4 @@ PRODUCT_NAME = new_galmuri
 PRODUCT_BUNDLE_IDENTIFIER = com.genkino.galmuri2
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.genkino. All rights reserved.
