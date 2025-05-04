@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import '../models/post.dart';
 import 'base_service.dart';
+import 'package:flutter/material.dart';
 
 class DdanziService extends BaseBoardService {
   @override
@@ -10,7 +11,10 @@ class DdanziService extends BaseBoardService {
   String get boardName => 'ddanzi';
   
   @override
-  String get boardDisplayName => '딴지';
+  String get boardDisplayName => '딴지일보';
+  
+  @override
+  Color get boardColor => Color(0xFFD32F2F);  // 딴지일보 메인 색상
   
   @override
   Map<String, String> get headers => {

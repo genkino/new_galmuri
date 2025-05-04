@@ -1,6 +1,7 @@
 import '../models/post.dart';
 import 'base_service.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
 
 class TheqooService extends BaseBoardService {
   @override
@@ -11,6 +12,9 @@ class TheqooService extends BaseBoardService {
   
   @override
   String get boardDisplayName => '더쿠';
+  
+  @override
+  Color get boardColor => Color(0xFFFF4081);  // 더쿠 메인 색상
   
   @override
   Map<String, String> get headers => {

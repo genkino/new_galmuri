@@ -142,7 +142,13 @@ class _PostListScreenState extends State<PostListScreen> {
         if (service != null) {
           service.currentPage = _currentPage;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
-          posts.addAll(servicePosts);
+          posts.addAll(servicePosts.map((post) => Post(
+            title: post.title,
+            author: post.author,
+            views: post.views,
+            timestamp: post.timestamp,
+            url: post.url,
+          )).toList());
         }
       }
 
@@ -246,12 +252,32 @@ class _PostListScreenState extends State<PostListScreen> {
                 }
                 
                 final post = _posts[index];
+                // 서비스 키 추출 로직 수정
+                String serviceKey = '';
+                if (post.title.startsWith('[')) {
+                  final endBracket = post.title.indexOf(']');
+                  if (endBracket != -1) {
+                    final siteName = post.title.substring(1, endBracket);
+                    switch (siteName) {
+                      case '클리앙':
+                        serviceKey = 'clien';
+                        break;
+                      case '딴지일보':
+                        serviceKey = 'ddanzi';
+                        break;
+                      case '더쿠':
+                        serviceKey = 'theqoo';
+                        break;
+                    }
+                  }
+                }
                 return PostCard(
                   title: post.title,
                   author: post.author,
                   views: post.views,
                   timestamp: post.timestamp,
                   url: post.url,
+                  service: _services[serviceKey],
                 );
               },
             ),
@@ -265,6 +291,7 @@ class PostCard extends StatelessWidget {
   final int views;
   final DateTime timestamp;
   final String url;
+  final BaseBoardService? service;
 
   const PostCard({
     Key? key,
@@ -273,21 +300,8 @@ class PostCard extends StatelessWidget {
     required this.views,
     required this.timestamp,
     required this.url,
+    this.service,
   }) : super(key: key);
-
-  // 사이트별 색상 매핑
-  static final Map<String, Color> _siteColors = {
-    'clien': Color(0xFF0066CC),  // 클리앙 실제 메인 색상
-    'ddanzi': Color(0xFFD32F2F), // 딴지일보 메인 색상
-    'theqoo': Color(0xFFFF4081), // 더쿠 메인 색상
-  };
-
-  // 사이트 이름 매핑
-  static final Map<String, String> _siteNameMapping = {
-    '클리앙': 'clien',
-    '딴지일보': 'ddanzi',
-    '더쿠': 'theqoo',
-  };
 
   // 제목에서 사이트 이름 추출
   String _getSiteName() {
@@ -303,9 +317,10 @@ class PostCard extends StatelessWidget {
 
   // 사이트별 색상 가져오기
   Color _getSiteColor() {
-    final siteName = _getSiteName();
-    final serviceKey = _siteNameMapping[siteName] ?? '';
-    return _siteColors[serviceKey] ?? Colors.grey;
+    if (service != null) {
+      return service!.boardColor;
+    }
+    return Colors.grey;
   }
 
   @override
@@ -354,18 +369,39 @@ class PostCard extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () async {
-          final uri = Uri.parse(url);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri);
-          }
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PostDetailScreen(
+                post: Post(
+                  title: title,
+                  author: author,
+                  views: views,
+                  timestamp: timestamp,
+                  url: url,
+                ),
+              ),
+            ),
+          );
         },
       ),
     );
   }
 
   String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}분 전';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}시간 전';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}일 전';
+    } else {
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
   }
 }
 

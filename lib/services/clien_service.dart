@@ -1,5 +1,6 @@
 import '../models/post.dart';
 import 'base_service.dart';
+import 'package:flutter/material.dart';
 
 class ClienService extends BaseBoardService {
   @override
@@ -10,6 +11,9 @@ class ClienService extends BaseBoardService {
   
   @override
   String get boardDisplayName => '클리앙';
+  
+  @override
+  Color get boardColor => Color(0xFF0066CC);  // 클리앙 메인 색상
   
   @override
   Map<String, String> get headers => {

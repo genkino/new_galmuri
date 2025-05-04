@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
 import '../models/post.dart';
 import '../database/database_helper.dart';
+import 'package:flutter/material.dart';
 
 abstract class BaseBoardService {
   String get baseUrl;
@@ -10,6 +11,7 @@ abstract class BaseBoardService {
   Map<String, String> get headers;
   String get postListSelector;
   Map<String, String> get selectors;
+  Color get boardColor;
   
   int currentPage = 0;
   final _dbHelper = DatabaseHelper();
