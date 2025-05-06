@@ -6,7 +6,8 @@ enum BoardType {
   ddanzi,
   theqoo,
   etoland,
-  dcinside;
+  dcinside,
+  bobaedream;
 
   String get displayName {
     switch (this) {
@@ -22,6 +23,8 @@ enum BoardType {
         return '이토랜드';
       case BoardType.dcinside:
         return '디씨인사이드';
+      case BoardType.bobaedream:
+        return '보배드림';
     }
   }
 
@@ -39,6 +42,8 @@ enum BoardType {
         return 'etoland';
       case BoardType.dcinside:
         return 'dcinside';
+      case BoardType.bobaedream:
+        return 'bobaedream';
     }
   }
 
@@ -56,6 +61,8 @@ enum BoardType {
         return Color(0xFF4CAF50);  // 이토랜드 메인 색상
       case BoardType.dcinside:
         return Color(0xFF1E88E5);  // 디시인사이드 메인 색상
+      case BoardType.bobaedream:
+        return Color(0xFF795548);  // 보배드림 메인 색상
     }
   }
 } 

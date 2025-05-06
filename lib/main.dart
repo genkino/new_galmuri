@@ -7,6 +7,7 @@ import 'services/ddanzi_service.dart';
 import 'services/theqoo_service.dart';
 import 'services/etoland_service.dart';
 import 'services/dcinside_service.dart';
+import 'services/bobaedream_service.dart';
 import 'screens/settings_screen.dart';
 import 'database/database_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,6 +50,7 @@ class _PostListScreenState extends State<PostListScreen> {
     'theqoo': TheqooService(),
     'etoland': EtolandService(),
     'dcinside': DcinsideService(),
+    'bobaedream': BobaedreamService(),
   };
   
   List<Post> _posts = [];
@@ -247,6 +249,9 @@ class _PostListScreenState extends State<PostListScreen> {
                           break;
                         case '디씨인사이드':
                           serviceKey = 'dcinside';
+                          break;
+                        case '보배드림':
+                          serviceKey = 'bobaedream';
                           break;
                       }
                     }

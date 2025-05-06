@@ -53,7 +53,8 @@ abstract class BaseBoardService {
             decodedBody = Latin1Decoder().convert(bytes);
           }
         } else {
-          decodedBody = response.body;
+          // EUC-KR이 아닌 경우 UTF-8로 디코딩
+          decodedBody = utf8.decode(response.bodyBytes);
         }
         
         print('Decoded body length: ${decodedBody.length}');
@@ -173,5 +174,13 @@ abstract class BaseBoardService {
       return url;
     }
     return '$baseUrl$url';
+  }
+
+  /// 텍스트에서 숫자만 추출하여 반환합니다.
+  /// 예: "조회수 1,234" -> "1234"
+  /// 예: "댓글 56개" -> "56"
+  String extractNumber(String text) {
+    if (text.isEmpty) return '0';
+    return text.replaceAll(RegExp(r'[^0-9]'), '');
   }
 } 
