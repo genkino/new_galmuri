@@ -5,4 +5,4 @@
 
 git add .
 git commit -m 'make binary'
-git push --rebase
+git push
