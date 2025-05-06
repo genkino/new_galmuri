@@ -103,7 +103,8 @@ class _PostListScreenState extends State<PostListScreen> {
           service.currentPage = _currentPage;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
           posts.addAll(servicePosts.map((post) => Post(
-            title: '[${service.boardDisplayName}] ${post.title}',
+            boardId: post.boardId,
+            title: post.title,
             author: post.author,
             views: post.views,
             timestamp: post.timestamp,
@@ -118,6 +119,7 @@ class _PostListScreenState extends State<PostListScreen> {
           service.currentPage = _currentPage;  // 0-based index로 변환
           final servicePosts = await service.getPosts();
           posts.addAll(servicePosts.map((post) => Post(
+            boardId: post.boardId,
             title: post.title,
             author: post.author,
             views: post.views,
@@ -227,42 +229,10 @@ class _PostListScreenState extends State<PostListScreen> {
                 }
                 
                 final post = _posts[index];
-                // 서비스 키 추출 로직 수정
-                String serviceKey = '';
-                if (_selectedBoard == BoardType.all) {
-                  if (post.title.startsWith('[')) {
-                    final endBracket = post.title.indexOf(']');
-                    if (endBracket != -1) {
-                      final siteName = post.title.substring(1, endBracket);
-                      switch (siteName) {
-                        case '클리앙':
-                          serviceKey = 'clien';
-                          break;
-                        case '딴지일보':
-                          serviceKey = 'ddanzi';
-                          break;
-                        case '더쿠':
-                          serviceKey = 'theqoo';
-                          break;
-                        case '이토랜드':
-                          serviceKey = 'etoland';
-                          break;
-                        case '디씨인사이드':
-                          serviceKey = 'dcinside';
-                          break;
-                        case '보배드림':
-                          serviceKey = 'bobaedream';
-                          break;
-                      }
-                    }
-                  }
-                } else {
-                  serviceKey = _selectedBoard.serviceKey;
-                }
+                final service = _services[post.boardId];
 
-                final service = _services[serviceKey];
                 if (service == null) {
-                  return const SizedBox.shrink();  // 서비스를 찾을 수 없는 경우 빈 위젯 반환
+                  return const SizedBox.shrink(); // 서비스를 찾을 수 없는 경우 빈 위젯 반환
                 }
 
                 return PostCard(
@@ -271,7 +241,7 @@ class _PostListScreenState extends State<PostListScreen> {
                   views: post.views,
                   timestamp: post.timestamp,
                   url: post.url,
-                  service: service,
+                  service: service
                 );
               },
             ),

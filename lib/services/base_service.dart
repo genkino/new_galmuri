@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 
 abstract class BaseBoardService {
+  String get boardId;
   String get baseUrl;
   String get boardName;
   String get boardDisplayName;

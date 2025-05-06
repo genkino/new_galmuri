@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 
 class ClienService extends BaseBoardService {
   @override
+  String get boardId => "clien";
+
+  @override
   String get baseUrl => 'https://www.clien.net';
   
   @override
@@ -80,6 +83,7 @@ class ClienService extends BaseBoardService {
     final url = buildFullUrl(linkElement.attributes['href'] ?? '');
     
     return Post(
+      boardId: boardId,
       title: title,
       author: author,
       views: views,

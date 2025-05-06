@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 
 class TheqooService extends BaseBoardService {
   @override
+  String get boardId => "theqoo";
+
+  @override
   String get baseUrl => 'https://theqoo.net';
   
   @override
@@ -90,6 +93,7 @@ class TheqooService extends BaseBoardService {
     print('URL: $url');
     
     return Post(
+      boardId: boardId,
       title: title,
       author: author,
       views: views,

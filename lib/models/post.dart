@@ -1,4 +1,5 @@
 class Post {
+  final String boardId;
   final String title;
   final String author;
   final int views;
@@ -6,6 +7,7 @@ class Post {
   final String url;
 
   Post({
+    required this.boardId,
     required this.title,
     required this.author,
     required this.views,
@@ -15,6 +17,7 @@ class Post {
 
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
+      boardId: json['boardId'] as String,
       title: json['title'] as String,
       author: json['author'] as String,
       views: json['views'] as int,

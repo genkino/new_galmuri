@@ -6,6 +6,9 @@ import 'package:cp949/cp949.dart' as cp949;
 
 class EtolandService extends BaseBoardService {
   @override
+  String get boardId => "etoland";
+
+  @override
   String get baseUrl => 'https://www.etoland.co.kr/plugin/mobile';
   
   @override
@@ -91,6 +94,7 @@ class EtolandService extends BaseBoardService {
       print('URL: $url');
 
       return Post(
+        boardId: boardId,
         title: title,
         author: author,
         views: views,

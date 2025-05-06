@@ -7,6 +7,9 @@ import '../models/post.dart';
 
 class BobaedreamService extends BaseBoardService {
   @override
+  String get boardId => "bobaedream";
+
+  @override
   String get boardDisplayName => '보배드림';
 
   @override
@@ -126,6 +129,7 @@ class BobaedreamService extends BaseBoardService {
       }
       
       return Post(
+        boardId: boardId,
         title: title,
         author: author,
         views: views,
